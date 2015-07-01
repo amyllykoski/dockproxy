@@ -66,9 +66,40 @@ func main() {
 	server.ListenAndServe()
 }
 
+// Build messages are sent to /build Rest endpoint. The POST method is used
+// for updating build information. The GET method retrieves the latest.
+// JSON is as follows:
+//   { "name" : "name of the builder",
+//     "image" : "name of the image being built",
+//	   "status" : "build | tag | push | done | error"
+//   }
+func handleBuildMessages(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	switch r.Method {
+	case "POST":
+		fmt.Println("Got POST")
+	case "GET":
+		fmt.Println("Got GET")
+	default:
+		log.Println("Unsupported method: ", r.Method)
+	}
+
+	//fmt.Println("Body: " + string(body))
+}
+
 type myHandler struct{}
 
 func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	if strings.Contains(r.URL.String(), "/build") {
+		handleBuildMessages(w, r)
+		return
+	}
+
 	redirectURL := strings.Replace(r.URL.String(), "/_", "http://", 1)
 	fmt.Printf("Orig: %s, redirect: %s\n", r.URL.String(), redirectURL)
 	handleRequest(w, redirectURL)

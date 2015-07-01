@@ -1,4 +1,4 @@
-[2~[2~go get github.com/golang/lint/golint
+go get github.com/golang/lint/golint
 go get github.com/kisielk/errcheck
 go get golang.org/x/tools/cmd/benchcmp
 go get github.com/cespare/prettybench
