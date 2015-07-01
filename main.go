@@ -17,6 +17,9 @@ type flags struct {
 	listenPort string
 }
 
+// Stores the latest JSON from the builder. Assumes only one builder exists.
+var buildMessage []byte
+
 func getCmdLineArgs() flags {
 	listenIP := flag.String("lip", "0.0.0.0", "listen IP address")
 	listenPort := flag.String("lp", "8007", "listen port")
@@ -63,6 +66,7 @@ func main() {
 		Handler: &myHandler{},
 	}
 
+	buildMessage = nil
 	server.ListenAndServe()
 }
 
@@ -81,9 +85,13 @@ func handleBuildMessages(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		fmt.Println("Got POST")
+		log.Println("Got POST")
+		buildMessage = body
 	case "GET":
-		fmt.Println("Got GET")
+		log.Println("Got GET")
+		w.Header().Set("Access-Control-Allow-Credentials", "false")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		io.WriteString(w, string(buildMessage))
 	default:
 		log.Println("Unsupported method: ", r.Method)
 	}
@@ -97,6 +105,10 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(r.URL.String(), "/build") {
 		handleBuildMessages(w, r)
+		return
+	}
+
+	if strings.Contains(r.URL.String(), "/favicon") {
 		return
 	}
 
