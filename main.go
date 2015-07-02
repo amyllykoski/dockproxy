@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -12,24 +13,29 @@ import (
 )
 
 // Command line flags.
-type flags struct {
+type Flags struct {
 	listenIP   string
 	listenPort string
 }
 
-// Stores the latest JSON from the builder. Assumes only one builder exists.
-var buildMessage []byte
+type BuildMessage struct {
+	BuilderName string `json:"name"`
+	Image       string `json:"image"`
+	Status      string `json:"status"`
+}
 
-func getCmdLineArgs() flags {
+// Stores the latest JSONs from the builders.
+var buildMessages map[string]BuildMessage
+
+func getCmdLineArgs() Flags {
 	listenIP := flag.String("lip", "0.0.0.0", "listen IP address")
 	listenPort := flag.String("lp", "8007", "listen port")
 	flag.Parse()
 
-	return flags{*listenIP, *listenPort}
+	return Flags{*listenIP, *listenPort}
 }
 
 func handleRequest(w http.ResponseWriter, url string) {
-	log.Println("Handling request: " + url)
 	if len(url) < 5 {
 		io.WriteString(w, "Cannot redirect to "+url)
 		return
@@ -49,7 +55,7 @@ func handleRequest(w http.ResponseWriter, url string) {
 			fmt.Printf("%s", err)
 			os.Exit(1)
 		}
-		fmt.Printf("%s\n", string(contents))
+		//fmt.Printf("%s\n", string(contents))
 		io.WriteString(w, string(contents))
 	}
 }
@@ -66,7 +72,7 @@ func main() {
 		Handler: &myHandler{},
 	}
 
-	buildMessage = nil
+	buildMessages = make(map[string]BuildMessage)
 	server.ListenAndServe()
 }
 
@@ -83,15 +89,26 @@ func handleBuildMessages(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 
+	var buildMessage BuildMessage
+	json.Unmarshal(body, &buildMessage)
+
 	switch r.Method {
 	case "POST":
-		log.Println("Got POST")
-		buildMessage = body
+		buildMessages[buildMessage.BuilderName] = buildMessage
+		log.Println("BuildMessages: %s ", buildMessages)
 	case "GET":
-		log.Println("Got GET")
 		w.Header().Set("Access-Control-Allow-Credentials", "false")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		io.WriteString(w, string(buildMessage))
+		arr := make([]BuildMessage, 0, len(buildMessages))
+		for _, msg := range buildMessages {
+			log.Println("Value: ", msg)
+			arr = append(arr, msg)
+		}
+		ret, err := json.Marshal(arr)
+		if err != nil {
+			panic(err)
+		}
+		io.WriteString(w, string(ret))
 	default:
 		log.Println("Unsupported method: ", r.Method)
 	}
