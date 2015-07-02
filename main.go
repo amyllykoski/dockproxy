@@ -40,7 +40,7 @@ func serveStaticFiles() {
 	http.Handle("/", fs)
 
 	log.Println("Serving static files in port 8004.")
-	http.ListenAndServe(":8004", nil)
+	http.ListenAndServe("0.0.0.0:8004", nil)
 }
 
 func handleRequest(w http.ResponseWriter, url string) {
