@@ -35,6 +35,14 @@ func getCmdLineArgs() Flags {
 	return Flags{*listenIP, *listenPort}
 }
 
+func serveStaticFiles() {
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/", fs)
+
+	log.Println("Serving static files in port 8004.")
+	http.ListenAndServe(":8004", nil)
+}
+
 func handleRequest(w http.ResponseWriter, url string) {
 	if len(url) < 5 {
 		io.WriteString(w, "Cannot redirect to "+url)
@@ -73,6 +81,7 @@ func main() {
 	}
 
 	buildMessages = make(map[string]BuildMessage)
+	go serveStaticFiles()
 	server.ListenAndServe()
 }
 

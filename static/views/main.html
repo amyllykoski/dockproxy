@@ -1,0 +1,1 @@
+<h4>Images</h4> <div ng-controller="MainCtrl"> <table st-table="rowCollection" class="table table-striped"> <thead> <tr> <th>Tags <th>Created <th>Id <th>Size   <tbody> <tr ng-repeat="row in images"> <td>{{row.RepoTags}} <td>{{row.Created * 1000 | date:'yyyy-MM-dd HH:mm' }}  <td>{{row.Id}} <td>{{row.Size}}   </table> </div>
