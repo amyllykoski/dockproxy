@@ -12,10 +12,34 @@ import (
 	"strings"
 )
 
+// Agent configuration, from configuration file.
+type Agent struct {
+	Name      string `json:"name"`
+	IpAddress string `json:"ipAddress"`
+	Port      string `json:"port"`
+}
+
+var agents []Agent
+
+func readConfiguration(configFile string) {
+	file, err := os.Open("config.json")
+	if err != nil {
+		panic(err)
+	}
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&agents)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Println(agents)
+}
+
 // Command line flags.
 type Flags struct {
 	listenIP   string
 	listenPort string
+	configFile string
 }
 
 type BuildMessage struct {
@@ -30,9 +54,10 @@ var buildMessages map[string]BuildMessage
 func getCmdLineArgs() Flags {
 	listenIP := flag.String("lip", "0.0.0.0", "listen IP address")
 	listenPort := flag.String("lp", "8007", "listen port")
+	configFile := flag.String("c", "config.json", "Proxy configuration file")
 	flag.Parse()
 
-	return Flags{*listenIP, *listenPort}
+	return Flags{*listenIP, *listenPort, *configFile}
 }
 
 func serveStaticFiles() {
@@ -74,12 +99,14 @@ func main() {
 	fmt.Println("Command Line Flags:")
 	fmt.Println("[listenUrl: " + flags.listenIP + "]")
 	fmt.Println("[listenPort: " + flags.listenPort + "]")
+	fmt.Println("[configFile: " + flags.configFile + "]")
 
 	server := http.Server{
 		Addr:    flags.listenIP + ":" + flags.listenPort,
 		Handler: &myHandler{},
 	}
 
+	readConfiguration(flags.configFile)
 	buildMessages = make(map[string]BuildMessage)
 	go serveStaticFiles()
 	server.ListenAndServe()
@@ -125,12 +152,34 @@ func handleBuildMessages(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println("Body: " + string(body))
 }
 
+func handleGetAgentConfiguration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Credentials", "false")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	arr := make([]Agent, 0, len(agents))
+	for _, msg := range agents {
+		arr = append(arr, msg)
+	}
+
+	ret, err := json.Marshal(arr)
+	if err != nil {
+		panic(err)
+	}
+	io.WriteString(w, string(ret))
+	//fmt.Println("Body: " + string(body))
+}
+
 type myHandler struct{}
 
 func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(r.URL.String(), "/build") {
 		handleBuildMessages(w, r)
+		return
+	}
+
+	if strings.Contains(r.URL.String(), "/agents") {
+		handleGetAgentConfiguration(w, r)
 		return
 	}
 
