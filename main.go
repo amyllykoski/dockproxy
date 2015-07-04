@@ -80,13 +80,15 @@ func handleRequest(w http.ResponseWriter, url string) {
 	if err != nil {
 		fmt.Printf("%s", err)
 		io.WriteString(w, "Error in HTTP Proxy")
-		os.Exit(1)
+		//os.Exit(1)
+		return
 	} else {
 		defer response.Body.Close()
 		contents, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			fmt.Printf("%s", err)
-			os.Exit(1)
+			//os.Exit(1)
+			return
 		}
 		//fmt.Printf("%s\n", string(contents))
 		io.WriteString(w, string(contents))

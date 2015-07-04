@@ -1,12 +1,12 @@
 [
     {
 	"name" : "Teradata Sofware Registry",
-	"ipAddress" : "192.168.1.2",
-	"port" : "8008"
+	"ipAddress" : "192.168.145.129",
+	"port" : "2376"
     },
     {
-	"name" : "Customer Software Registry",
-	"ipAddress" : "192.168.1.3",
-	"port" : "8005"
+	"name" : "Teradata Sofware Registry",
+	"ipAddress" : "192.168.145.129",
+	"port" : "2376"
     }
 ]
